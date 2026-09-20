@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 2 — Polling and Interrupts</title>
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --page: #ffffff;
+    --ink: #1f2933;
+    --muted: #5c6b7a;
+    --accent: #2563eb;
+    --accent-soft: #e8f0fe;
+    --border: #e2e8f0;
+    --code-bg: #0f172a;
+    --shadow: 0 10px 40px rgba(15, 23, 42, 0.08);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.7;
+    font-size: 17px;
+  }
+
+  /* Header banner */
+  header.hero {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #3b82f6 100%);
+    color: #fff;
+    padding: 56px 24px 48px;
+    text-align: center;
+  }
+  header.hero .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0.85;
+    margin-bottom: 10px;
+  }
+  header.hero h1 {
+    margin: 0;
+    font-size: clamp(28px, 5vw, 44px);
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  header.hero p {
+    margin: 14px auto 0;
+    max-width: 620px;
+    opacity: 0.9;
+    font-size: 16px;
+  }
+
+  /* Layout */
+  main {
+    max-width: 900px;
+    margin: -28px auto 60px;
+    background: var(--page);
+    padding: 48px clamp(20px, 5vw, 64px);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    position: relative;
+  }
+
+  h2 {
+    font-size: 26px;
+    margin: 48px 0 12px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--accent-soft);
+    color: #12213b;
+    scroll-margin-top: 20px;
+  }
+  h2:first-of-type { margin-top: 8px; }
+  h3 {
+    font-size: 19px;
+    margin: 30px 0 8px;
+    color: var(--accent);
+  }
+  p { margin: 12px 0; }
+  ul { margin: 12px 0; padding-left: 22px; }
+  li { margin: 7px 0; }
+  li strong, p strong { color: #12213b; }
+  code {
+    background: var(--accent-soft);
+    color: #1d4ed8;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.9em;
+  }
+
+  /* Figures */
+  figure {
+    margin: 24px 0;
+    text-align: center;
+  }
+  figure img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.07);
+    cursor: zoom-in;
+    transition: transform 0.15s ease;
+  }
+  figure img:hover { transform: scale(1.01); }
+  figure.code-shot img { background: #fbfbfd; }
+  figcaption {
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  /* Callout for summaries */
+  .callout {
+    background: var(--accent-soft);
+    border-left: 4px solid var(--accent);
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    margin: 20px 0;
+  }
+  .callout p { margin: 0; }
+
+  .exercise-tag {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 4px;
+  }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    padding: 20px;
+  }
+
+  /* Lightbox */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 12, 22, 0.92);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    cursor: zoom-out;
+    z-index: 100;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox img {
+    max-width: 96%;
+    max-height: 96%;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  @media (max-width: 600px) {
+    body { font-size: 16px; }
+    main { margin: -20px 12px 40px; padding: 32px 18px; border-radius: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="eyebrow">ET4047 · Embedded Systems</div>
+  <h1>Lab 2 — Polling and Interrupts</h1>
+  <p>Exploring two fundamental approaches for handling input events in embedded systems, using an Arduino, push buttons and LEDs.</p>
+</header>
+
+<main>
+
+  <h2>Introduction</h2>
+  <p>In this lab we explore two fundamental approaches for handling input events in embedded systems: <strong>polling</strong> and <strong>interrupts</strong>. We use an Arduino (Uno or Nano) with a breadboard as our platform. By the end of the lab you will understand what polling and interrupts are, and you will work through a series of short exercises that build on each other using push buttons and LEDs.</p>
+
+  <h2>Safety and Handling Precautions</h2>
+  <p>Read this section before you touch any equipment. Following these steps keeps you safe and protects the boards and components at your bench.</p>
+
+  <h2>What is Polling?</h2>
+  <p>Polling is a method where the CPU continuously checks the status of an input in a loop to see if an event has occurred. The microcontroller repeatedly reads a button's state in the main loop and acts only when it detects a change, such as a button press. Polling is simple to implement using <code>if</code> statements inside <code>loop()</code>, but it has trade-offs:</p>
+  <ul>
+    <li><strong>Simplicity</strong> — easy to write and reason about.</li>
+    <li><strong>Constant CPU usage</strong> — the processor is always busy checking.</li>
+    <li><strong>Latency</strong> — a response can be delayed until the next loop iteration.</li>
+    <li><strong>Predictability</strong> — behaviour is deterministic and easy to follow.</li>
+  </ul>
+  <div class="callout"><p>In summary, polling is like a teacher repeatedly asking every student whether they have a question — systematic, but potentially inefficient.</p></div>
+
+  <h2>What are Interrupts?</h2>
+  <p>Interrupts allow an external event to signal the CPU when attention is needed, pausing the current program to handle that event immediately. Instead of the CPU constantly checking the button, the button hardware interrupts the CPU when pressed. The CPU runs a short <strong>Interrupt Service Routine (ISR)</strong> to handle the press, then returns to the main program. Key points:</p>
+  <ul>
+    <li><strong>Efficient and responsive</strong> — no time wasted checking idle inputs.</li>
+    <li><strong>Low latency</strong> — the event is handled almost immediately.</li>
+    <li><strong>Complexity</strong> — requires more careful design than polling.</li>
+    <li><strong>Priority and interference</strong> — ISRs must be kept short.</li>
+  </ul>
+  <div class="callout"><p>In summary, using interrupts is like students raising their hands when they have a question — the teacher (CPU) does not have to check every student and can respond immediately.</p></div>
+
+  <h2>Lab Objective</h2>
+  <p>We build up in small steps, one exercise at a time:</p>
+  <ul>
+    <li><strong>Exercise 1 — Getting started:</strong> the Arduino essentials — <code>setup()</code>, <code>loop()</code>, pin modes, <code>digitalWrite()</code> and the Serial Monitor.</li>
+    <li><strong>Exercise 2 — Debounce:</strong> read a button cleanly by removing contact bounce in software.</li>
+    <li><strong>Exercise 3 — Polling:</strong> continuously check a button in the main loop.</li>
+    <li><strong>Exercise 4 — Interrupts:</strong> react to a button with a hardware interrupt and an ISR.</li>
+    <li><strong>Exercise 5 — Two buttons:</strong> a second button controls a second LED.</li>
+  </ul>
+
+  <h2>Hardware Setup</h2>
+  <p>Most exercises use the same breadboard circuit — physical push buttons and physical LEDs wired to the Arduino (no shield). Exercise 1 uses only the two LEDs. Each exercise below has its own wiring diagram; the standard parts are:</p>
+  <ul>
+    <li><strong>2 LEDs:</strong> connect LED 1's long leg (anode) to <code>D4</code> and LED 2's long leg to <code>D5</code>. Connect each LED's short leg (cathode) to GND through its own 220 ohm resistor.</li>
+    <li><strong>Push button S1:</strong> one leg to <code>D2</code>, the other leg to GND. Used from Exercise 2 on.</li>
+    <li><strong>Push button S2:</strong> one leg to <code>D3</code>, the other leg to GND. Used in Exercise 5 only.</li>
+  </ul>
+  <p>All buttons use <code>INPUT_PULLUP</code>, so a pin reads HIGH when the button is idle and LOW when pressed (active-low) — no external resistor is needed on the button. Pins <code>D2</code> and <code>D3</code> are used for the buttons because these are the Arduino's external interrupt pins, which the interrupts exercise (Exercise 4) relies on.</p>
+  <figure><img src="images/image1.png" alt="Overall hardware setup"></figure>
+
+  <h2><span class="exercise-tag">Exercise 1</span><br>Getting Started</h2>
+  <p>Before using any buttons, we get familiar with the Arduino essentials: the <code>setup()</code> and <code>loop()</code> functions, setting pin modes, driving outputs with <code>digitalWrite()</code>, and printing to the Serial Monitor. This program blinks two LEDs alternately and prints what it is doing.</p>
+
+  <h3>Key ideas</h3>
+  <ul>
+    <li><code>setup()</code> runs once when the board powers on or resets. It is where you initialise things — open the serial port and set pin modes.</li>
+    <li><code>loop()</code> runs straight after <code>setup()</code> and then repeats forever. This is where the ongoing work happens.</li>
+    <li><code>pinMode(pin, OUTPUT)</code> tells the Arduino a pin will drive something such as an LED; use <code>INPUT</code> (or <code>INPUT_PULLUP</code>) to read a pin.</li>
+    <li><code>digitalWrite(pin, HIGH/LOW)</code> sets an output pin to 5V (HIGH) or 0V (LOW) — this is what turns an LED on or off.</li>
+    <li><code>Serial.begin(9600)</code> opens the Serial Monitor at 9600 baud, and <code>Serial.println(...)</code> prints a line you can read on your PC (open Tools &gt; Serial Monitor and set it to 9600 baud).</li>
+  </ul>
+
+  <h3>Circuit and Setup</h3>
+  <p>Wiring diagram — build this circuit on the breadboard.</p>
+  <figure><img src="images/image2.png" alt="Exercise 1 wiring diagram"><figcaption>Figure 1a: Reference wiring for Exercise 1.</figcaption></figure>
+  <p><strong>Visuino Setup</strong></p>
+  <figure><img src="images/image3.png" alt="Visuino setup for Exercise 1"></figure>
+  <p><strong>Wokwi Setup</strong></p>
+  <figure><img src="images/image4.png" alt="Wokwi setup for Exercise 1"></figure>
+  <p><strong>Physical setup</strong> — breadboard wiring.</p>
+  <figure><img src="images/image5.jpeg" alt="Physical breadboard setup for Exercise 1"></figure>
+
+  <h3>Code</h3>
+  <figure class="code-shot"><img src="images/image6.png" alt="Exercise 1 code"></figure>
+
+  <h3>How it works</h3>
+  <ul>
+    <li><code>setup()</code> opens the serial monitor and sets both LED pins as outputs — this is the initialising step.</li>
+    <li><code>loop()</code> turns LED 1 on and LED 2 off, prints the state, waits half a second, then swaps them, so the two LEDs alternate forever.</li>
+    <li>Open the Serial Monitor at 9600 baud to watch the messages printed each time the state changes.</li>
+  </ul>
+  <p><strong>Wokwi:</strong> you can also build this in the simulator at wokwi.com. Start a new Arduino Uno project, drag in a breadboard and draw the circuit shown in the wiring diagram (a breadboard and 2 LEDs with resistors on D4 and D5), paste the sketch above, and press Play.</p>
+
+  <h2><span class="exercise-tag">Exercise 2</span><br>Button Debounce</h2>
+  <p>This exercise introduces <strong>debounce</strong>: making a single button press register only once. It uses one push button (S1) and one LED. Each clean press toggles the LED on or off.</p>
+
+  <h3>Button wiring (active-low)</h3>
+  <p>Like every button in this lab, S1 uses <code>INPUT_PULLUP</code>. The internal pull-up resistor holds the pin HIGH when the button is idle, and pressing the button connects the pin to GND, pulling it LOW. This is called <strong>active-low</strong>: pressed reads LOW. No external resistor is needed on the button.</p>
+
+  <h3>What is debounce?</h3>
+  <p>A mechanical push button does not switch cleanly. For a few milliseconds after it is pressed or released the metal contacts bounce, making the pin flip between HIGH and LOW several times. Without handling this, one physical press can be read as many presses. Debounce fixes it: we only accept a new button state once the reading has stayed the same for a short settling time (here 50 ms).</p>
+
+  <h3>Circuit and Setup</h3>
+  <p>One push button (S1 on <code>D2</code>) and one LED (LED 1 on <code>D4</code>). Wiring diagram — build this circuit on the breadboard.</p>
+  <figure><img src="images/image7.png" alt="Exercise 2 wiring diagram"><figcaption>Figure 2a: Reference wiring for Exercise 2.</figcaption></figure>
+
+  <h3>Code</h3>
+  <figure class="code-shot"><img src="images/image8.png" alt="Exercise 2 code"></figure>
+
+  <h3>How it works</h3>
+  <ul>
+    <li>Each pass the raw button reading is taken. Whenever it changes, a timer (<code>lastChangeTime</code>) is reset.</li>
+    <li>Only when the reading has been steady for longer than <code>debounceDelay</code> (50 ms) is it accepted as the real state.</li>
+    <li>On a clean change to LOW (a genuine press, active-low) LED 1 is toggled once and a message is printed.</li>
+    <li>Try setting <code>debounceDelay</code> to 0 — you will often see the LED toggle several times for a single press, which is the bounce that debounce removes.</li>
+  </ul>
+  <p><strong>Wokwi:</strong> Start a new Arduino Uno project, drag in a breadboard and draw the circuit shown in the wiring diagram (S1 on D2 to GND, and LED 1 with a 220 ohm resistor on D4), paste the sketch above, and press Play.</p>
+
+  <h2><span class="exercise-tag">Exercise 3</span><br>Polling</h2>
+  <p>Use polling to detect when the button is pressed, then turn both LEDs on for a short duration. The Arduino continuously loops, checking the state of the button. No interrupts are used.</p>
+
+  <h3>Circuit and Setup</h3>
+  <p>Wiring diagram — build this circuit on the breadboard.</p>
+  <figure><img src="images/image9.png" alt="Exercise 3 wiring diagram"><figcaption>Figure 3a: Reference wiring for Exercise 3.</figcaption></figure>
+
+  <h3>Code</h3>
+  <figure class="code-shot"><img src="images/image10.png" alt="Exercise 3 code"></figure>
+
+  <h3>Expected Output</h3>
+  <figure><img src="images/image11.png" alt="Exercise 3 serial monitor output"><figcaption>Figure 3b: Serial monitor output for Exercise 3.</figcaption></figure>
+
+  <h3>How it works</h3>
+  <ul>
+    <li><code>loop()</code> reads the button each pass. If it is pressed, both LEDs are set HIGH and held for 3 seconds; otherwise they are set LOW.</li>
+    <li>The <code>delay(300)</code> at the end slows the loop so the serial monitor stays readable.</li>
+    <li>This is polling in action — the program flow is dominated by actively watching the input.</li>
+  </ul>
+
+  <h2><span class="exercise-tag">Exercise 4</span><br>Interrupts</h2>
+  <p>Re-implement the same behaviour using an external interrupt. The Arduino no longer checks the button in the main loop. Instead, pressing the button triggers an ISR that sets a flag, and the main loop responds to that flag.</p>
+
+  <h3>Circuit and Setup</h3>
+  <p>Same wiring as Exercise 3 — one push button (S1) and two LEDs.</p>
+  <figure><img src="images/image9.png" alt="Exercise 4 wiring diagram"><figcaption>Figure 4a: Reference wiring for Exercise 4.</figcaption></figure>
+
+  <h3>Code</h3>
+  <figure class="code-shot"><img src="images/image12.png" alt="Exercise 4 code"></figure>
+
+  <h3>Expected Output</h3>
+  <figure><img src="images/image13.png" alt="Exercise 4 serial monitor output"><figcaption>Figure 4b: Serial monitor output for Exercise 4.</figcaption></figure>
+
+  <h3>How it works</h3>
+  <ul>
+    <li><code>volatile bool s1Flag</code> signals from the ISR to the main loop; <code>volatile</code> ensures it is always read correctly.</li>
+    <li><code>attachInterrupt(... FALLING)</code> runs the ISR on the falling edge (HIGH to LOW = a press).</li>
+    <li><code>handleS1ISR()</code> is kept short: it only sets the flag, with no prints or delays.</li>
+  </ul>
+
+  <h2><span class="exercise-tag">Exercise 5</span><br>Two Buttons</h2>
+  <p>Add a second push button (S2 on <code>D3</code>), one button per LED. Below is a polling version for two buttons: S1 lights LED 1 and S2 lights LED 2.</p>
+
+  <h3>Circuit and Setup</h3>
+  <p>Same as before plus a second push button (S2 on <code>D3</code>). Wiring diagram — build this circuit on the breadboard.</p>
+  <figure><img src="images/image14.png" alt="Exercise 5 wiring diagram"><figcaption>Figure 5a: Reference wiring for Exercise 5.</figcaption></figure>
+
+  <h3>Polling Code (provided)</h3>
+  <figure class="code-shot"><img src="images/image15.png" alt="Exercise 5 polling code"></figure>
+
+  <h3>Your Task</h3>
+  <p>Using the polling code above and the interrupt code from Exercise 4, write an interrupt-driven version so that pressing Button 1 turns on LED 1 and pressing Button 2 turns on LED 2. Because S1 and S2 are on <code>D2</code> and <code>D3</code> (both interrupt pins), the same circuit works for both the polling and interrupt versions — only the code changes.</p>
+
+  <h2>Conclusion</h2>
+  <p>In this lab we started from the Arduino basics and then compared polling and interrupts, using a simple buttons-and-LEDs breadboard circuit.</p>
+  <p><strong>Summary of key learnings:</strong></p>
+  <ul>
+    <li>The Arduino runs <code>setup()</code> once for initialising, then <code>loop()</code> forever; <code>pinMode</code>, <code>digitalWrite</code> and the Serial Monitor are the basic tools.</li>
+    <li>Buttons use <code>INPUT_PULLUP</code> and are active-low: the pin idles HIGH and reads LOW when pressed, so no external resistor is needed.</li>
+    <li><strong>Debounce:</strong> mechanical buttons bounce, so a short settling delay (about 50 ms) makes each press register only once.</li>
+    <li><strong>Polling</strong> repeatedly asks the hardware "Are you pressed?" — simple, but can be inefficient.</li>
+    <li><strong>Interrupts</strong> let the hardware tell the software "Button pressed now!", so the CPU does not check unnecessarily.</li>
+    <li>Interrupt-driven systems let the CPU do other work or sleep, which is ideal for power saving.</li>
+    <li>Interrupt code needs care: use <code>volatile</code>, keep the ISR short, and remember the main code and ISR run asynchronously.</li>
+  </ul>
+
+</main>
+
+<footer>
+  Lab 2 — Polling and Interrupts · ET4047 Embedded Systems
+</footer>
+
+<div class="lightbox" id="lightbox"><img src="" alt="Enlarged view" id="lightbox-img"></div>
+
+<script>
+  // Click any figure image to view it enlarged
+  const lb = document.getElementById('lightbox');
+  const lbImg = document.getElementById('lightbox-img');
+  document.querySelectorAll('figure img').forEach(img => {
+    img.addEventListener('click', () => {
+      lbImg.src = img.src;
+      lb.classList.add('open');
+    });
+  });
+  lb.addEventListener('click', () => lb.classList.remove('open'));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') lb.classList.remove('open');
+  });
+</script>
+
+</body>
+</html>
