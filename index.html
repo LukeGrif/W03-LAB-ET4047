@@ -5,11 +5,91 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lab 2 — Polling and Interrupts</title>
 <style>
-  html, body { margin: 0; padding: 0; height: 100%; background: #ffffff; }
-  #report { display: block; border: 0; width: 100vw; height: 100vh; background: #ffffff; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+  }
+  /* Continuous white page stack — no gaps, no gray gutters */
+  #viewer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #ffffff;
+  }
+  #viewer canvas {
+    display: block;      /* removes inline-gap under canvases */
+    margin: 0;           /* no breaks between pages */
+    padding: 0;
+    max-width: 100%;
+    background: #ffffff;
+  }
+  #status {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #888;
+    text-align: center;
+    padding: 40px 20px;
+  }
 </style>
 </head>
 <body>
-  <iframe id="report" src="W03_LAB_Polling_and_Interrupts.pdf#toolbar=0&navpanes=0&scrollbar=0&view=FitH" title="Lab 2 — Polling and Interrupts"></iframe>
+  <div id="viewer"><div id="status">Loading lab report…</div></div>
+
+  <script type="module">
+    import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.6.82/pdf.min.mjs";
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.6.82/pdf.worker.min.mjs";
+
+    const PDF_URL = "W03_LAB_Polling_and_Interrupts.pdf";
+    const MAX_PAGE_WIDTH = 1000;   // cap so pages don't get huge on wide screens
+    const viewer = document.getElementById("viewer");
+    let pdfDoc = null;
+
+    function targetWidth() {
+      return Math.min(window.innerWidth, MAX_PAGE_WIDTH);
+    }
+
+    async function render() {
+      const width = targetWidth();
+      const dpr = window.devicePixelRatio || 1;
+      viewer.innerHTML = "";
+      for (let n = 1; n <= pdfDoc.numPages; n++) {
+        const page = await pdfDoc.getPage(n);
+        const base = page.getViewport({ scale: 1 });
+        const scale = width / base.width;
+        const viewport = page.getViewport({ scale: scale * dpr });
+
+        const canvas = document.createElement("canvas");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        canvas.style.width = width + "px";
+        canvas.style.height = (viewport.height / dpr) + "px";
+        viewer.appendChild(canvas);
+
+        await page.render({
+          canvasContext: canvas.getContext("2d"),
+          viewport,
+        }).promise;
+      }
+    }
+
+    // Re-render on resize (debounced) so the pages stay sharp
+    let t;
+    window.addEventListener("resize", () => {
+      clearTimeout(t);
+      t = setTimeout(render, 200);
+    });
+
+    (async () => {
+      try {
+        pdfDoc = await pdfjsLib.getDocument(PDF_URL).promise;
+        await render();
+      } catch (e) {
+        document.getElementById("status").textContent =
+          "Could not load the PDF. Please refresh the page.";
+        console.error(e);
+      }
+    })();
+  </script>
 </body>
 </html>
