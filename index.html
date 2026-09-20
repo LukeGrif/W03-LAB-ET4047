@@ -10,18 +10,19 @@
     padding: 0;
     background: #ffffff;
   }
-  /* Continuous white page stack — no gaps, no gray gutters */
+  /* Pages flow left-to-right and wrap: 1 column when narrow, 2 side by side when wide */
   #viewer {
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: flex-start;
+    margin: 0 auto;
     background: #ffffff;
   }
   #viewer canvas {
-    display: block;      /* removes inline-gap under canvases */
-    margin: 0;           /* no breaks between pages */
+    display: block;
+    margin: 0;       /* no breaks between pages */
     padding: 0;
-    max-width: 100%;
     background: #ffffff;
   }
   #status {
@@ -29,6 +30,7 @@
     color: #888;
     text-align: center;
     padding: 40px 20px;
+    width: 100%;
   }
 </style>
 </head>
@@ -41,16 +43,21 @@
       "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.6.82/pdf.worker.min.mjs";
 
     const PDF_URL = "W03_LAB_Polling_and_Interrupts.pdf";
-    const MAX_PAGE_WIDTH = 1000;   // cap so pages don't get huge on wide screens
+    const MAX_PAGE_WIDTH = 850;    // a page won't render wider than this
+    const TWO_UP_MIN = 960;        // window must be at least this wide to show 2 pages
     const viewer = document.getElementById("viewer");
     let pdfDoc = null;
 
-    function targetWidth() {
-      return Math.min(window.innerWidth, MAX_PAGE_WIDTH);
+    function layout() {
+      const columns = window.innerWidth >= TWO_UP_MIN ? 2 : 1;
+      const pageWidth = Math.min(Math.floor(window.innerWidth / columns), MAX_PAGE_WIDTH);
+      // lock the row to exactly `columns` pages wide so wrapping is precise
+      viewer.style.width = (columns * pageWidth) + "px";
+      return pageWidth;
     }
 
     async function render() {
-      const width = targetWidth();
+      const width = layout();
       const dpr = window.devicePixelRatio || 1;
       viewer.innerHTML = "";
       for (let n = 1; n <= pdfDoc.numPages; n++) {
@@ -73,7 +80,7 @@
       }
     }
 
-    // Re-render on resize (debounced) so the pages stay sharp
+    // Re-render on resize / zoom (debounced) so pages stay sharp and re-flow
     let t;
     window.addEventListener("resize", () => {
       clearTimeout(t);
