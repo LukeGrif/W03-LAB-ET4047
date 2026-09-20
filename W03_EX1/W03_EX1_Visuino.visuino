@@ -1,0 +1,269 @@
+{
+  "Config": {
+    "Build": {
+      "Board": "arduino:avr:nano:cpu=atmega328"
+    }
+  },
+  "Units": [
+    {
+      "*": [
+        {
+          "Name": "Arduino",
+          "Width": 256,
+          "Instance": {
+            "Digital": {
+              "*": [
+                {
+                  "+": "TArduinoAdditionalDigitalSerial0Channel"
+                },
+                {
+                  "+": "TArduinoAdditionalDigitalSerial0Channel"
+                },
+                {
+                  "+": "TArduinoAdditionalDigitalInterruptChannel"
+                },
+                {
+                  "+": "TArduinoBasicDigitalPWMInterruptChannel"
+                },
+                {
+                  "DigitalInputPin": {
+                    "SourcePin": {
+                      "ID": "__OpenWireRootUnit__.PulseGenerator1.OutputPin"
+                    }
+                  },
+                  "+": "TArduinoAdditionalDigitalChannel"
+                },
+                {
+                  "DigitalInputPin": {
+                    "SourcePin": {
+                      "ID": "__OpenWireRootUnit__.Inverter1.OutputPin"
+                    }
+                  },
+                  "+": "TArduinoBasicDigitalPWMChannel"
+                },
+                {
+                  "+": "TArduinoBasicDigitalPWMChannel"
+                },
+                {
+                  "+": "TArduinoAdditionalDigitalChannel"
+                },
+                {
+                  "+": "TArduinoAdditionalDigitalChannel"
+                },
+                {
+                  "+": "TArduinoBasicDigitalPWMChannel"
+                },
+                {
+                  "+": "TArduinoBasicDigitalPWMChannel"
+                },
+                {
+                  "+": "TArduinoBasicDigitalPWMSPI0Channel"
+                },
+                {
+                  "+": "TArduinoAdditionalDigitalSPI0Channel"
+                },
+                {
+                  "+": "TArduinoAdditionalDigitalSPI0Channel"
+                },
+                {
+                  "+": "TArduinoCombinedAnalogDigitalChannel"
+                },
+                {
+                  "+": "TArduinoCombinedAnalogDigitalChannel"
+                },
+                {
+                  "+": "TArduinoCombinedAnalogDigitalChannel"
+                },
+                {
+                  "+": "TArduinoCombinedAnalogDigitalChannel"
+                },
+                {
+                  "+": "TArduinoCombinedAnalogDigitalI2C0Channel"
+                },
+                {
+                  "+": "TArduinoCombinedAnalogDigitalI2C0Channel"
+                }
+              ]
+            },
+            "AnalogInput": {
+              "*": [
+                {
+                  "+": "TArduinoAnalogOptionalAsDigitalInputChannel"
+                },
+                {
+                  "+": "TArduinoAnalogOptionalAsDigitalInputChannel"
+                }
+              ]
+            },
+            "Modules": {
+              "*": [
+                {
+                  "+": "TArduinoEEPROMModule"
+                },
+                {
+                  "+": "TArduinoWatchdogTimerModule"
+                },
+                {
+                  "+": "TArduinoProcessor328Module"
+                },
+                {
+                  "+": "TArduino_AVR328_AnalogInput_Config"
+                }
+              ]
+            },
+            "Serial": {
+              "*": [
+                {
+                  "+": "TArduinoBreakHardwareSerial0"
+                }
+              ]
+            },
+            "I2CChannels": {
+              "*": [
+                {
+                  "+": "TArduinoI2C"
+                }
+              ]
+            },
+            "SPIChannels": {
+              "*": [
+                {
+                  "+": "TArduinoSPI"
+                }
+              ]
+            },
+            "BoardType": "Arduino Nano",
+            "+": "TArduinoBoard"
+          },
+          "X": 688,
+          "Height": 1088,
+          "Y": 256,
+          "Type": "Component"
+        },
+        {
+          "Name": "PulseGenerator1",
+          "Width": 144,
+          "Instance": {
+            "OutputPin": {
+              "SinkPins": [
+                {
+                  "ID": "__OpenWireRootUnit__.Arduino.Digital._Item4.DigitalInputPin",
+                  "Name": "__OpenWireRootUnit__.Arduino.Digital.Digital[ 4 ].DigitalInputPin"
+                },
+                {
+                  "ID": "__OpenWireRootUnit__.Inverter1.InputPin"
+                }
+              ]
+            },
+            "+": "TArduinoPulseGenerator"
+          },
+          "X": 256,
+          "Height": 48,
+          "Y": 592,
+          "Type": "Component"
+        },
+        {
+          "Name": "Inverter1",
+          "Width": 96,
+          "Instance": {
+            "InputPin": {
+              "SourcePin": {
+                "ID": "__OpenWireRootUnit__.PulseGenerator1.OutputPin"
+              }
+            },
+            "OutputPin": {
+              "SinkPins": [
+                {
+                  "ID": "__OpenWireRootUnit__.Arduino.Digital._Item5.DigitalInputPin",
+                  "Name": "__OpenWireRootUnit__.Arduino.Digital.Digital[ 5 ].DigitalInputPin"
+                }
+              ]
+            },
+            "+": "TArduinoBooleanInverter"
+          },
+          "X": 416,
+          "Height": 48,
+          "Y": 672,
+          "Type": "Component"
+        }
+      ],
+      "Name": "__OpenWireRootUnit__",
+      "Type": "Diagram",
+      "Links": [
+        {
+          "Routed": true,
+          "Begin": {
+            "ID": "PulseGenerator1.OutputPin",
+            "Y": 624,
+            "X": 400
+          },
+          "Name": "TOWELink1",
+          "End": {
+            "ID": "Arduino.Digital._Item4.DigitalInputPin",
+            "Y": 624,
+            "X": 688
+          }
+        },
+        {
+          "Routed": true,
+          "Begin": {
+            "ID": "PulseGenerator1.OutputPin",
+            "Y": 624,
+            "X": 400
+          },
+          "Name": "TOWELink2",
+          "End": {
+            "ID": "Inverter1.InputPin",
+            "Y": 704,
+            "X": 416
+          },
+          "Points": [
+            {
+              "Y": 624,
+              "X": 416
+            },
+            {
+              "Y": 656,
+              "X": 416
+            },
+            {
+              "Y": 656,
+              "X": 400
+            },
+            {
+              "Y": 704,
+              "X": 400
+            }
+          ]
+        },
+        {
+          "Routed": true,
+          "Begin": {
+            "ID": "Inverter1.OutputPin",
+            "Y": 704,
+            "X": 512
+          },
+          "Name": "TOWELink3",
+          "End": {
+            "ID": "Arduino.Digital._Item5.DigitalInputPin",
+            "Y": 656,
+            "X": 688
+          },
+          "Points": [
+            {
+              "Y": 704,
+              "X": 560
+            },
+            {
+              "Y": 656,
+              "X": 560
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "Version": "2",
+  "Content": "OpenWire Diagram",
+  "Product": "Visuino Pro - Visual Arduino Programming"
+}

@@ -1,0 +1,4 @@
+[wokwi]
+version = 1
+firmware = 'sketch/sketch_sep20a/build/arduino.avr.nano/sketch_sep20a.ino.hex'
+elf = 'sketch/sketch_sep20a/build/arduino.avr.nano/sketch_sep20a.ino.elf'
